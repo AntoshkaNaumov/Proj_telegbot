@@ -101,6 +101,9 @@ async def schedule_fetch_and_forward():
         # Define the times for message fetching and forwarding (adjust the times as needed)
         fetch_times = [datetime.time(8, 0), datetime.time(13, 0), datetime.time(16, 0), datetime.time(18, 0)]
 
+        # Set the date of current_time to a default date (e.g., 1970-01-01) for comparison
+        current_time = current_time.replace(year=1970, month=1, day=1)
+
         if current_time.time() in fetch_times:
             try:
                 # Call the fetch_messages_from_chats function using await
