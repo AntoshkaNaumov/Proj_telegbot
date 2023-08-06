@@ -190,9 +190,16 @@ async def handle_unknown_command(message: types.Message):
 
 
 if __name__ == '__main__':
-    # Start the scheduling task
-    asyncio.ensure_future(schedule_fetch_and_forward())
-
     # Start the bot
     from aiogram import executor
     executor.start_polling(dp)
+
+    # Get the event loop
+    loop = asyncio.get_event_loop()
+
+    # Schedule the fetch_and_forward task
+    loop.create_task(schedule_fetch_and_forward())
+
+    # Run the event loop
+    loop.run_forever()
+
