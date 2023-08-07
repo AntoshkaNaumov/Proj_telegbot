@@ -190,7 +190,7 @@ async def send_message_to_user(chat_id, messages):
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
     # Запуск планировщика при старте бота
-    scheduler.add_job(job_function, 'interval', hours=6)
+    scheduler.add_job(lambda: job_function(message.from_user.id, []), 'interval', hours=6)
     keyboard_markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [
         types.KeyboardButton(text="/fetch_messages"),
