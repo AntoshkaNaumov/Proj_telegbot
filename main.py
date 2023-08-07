@@ -1,6 +1,7 @@
 import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from config import token, chat_id
 from pyrogram import Client
 import asyncio
@@ -19,6 +20,11 @@ logging.basicConfig(level=logging.DEBUG)
 # Create the bot and dispatcher objects
 bot = Bot(token=token)
 dp = Dispatcher(bot, storage=MemoryStorage())
+
+
+# Инициализация планировщика
+scheduler = AsyncIOScheduler()
+scheduler.start()
 
 
 async def get_author_info(client, chat_id, user_id):
@@ -92,30 +98,60 @@ async def fetch_messages_from_chats(chat_links, keywords):
     return parsed_messages
 
 
-async def schedule_fetch_and_forward():
-    while True:
-        # Get the current time in the user's timezone (you can adjust the timezone as needed)
-        tz = pytz.timezone('Asia/Bangkok')  # Replace 'Your_Timezone_Here' with the desired timezone
-        current_time = datetime.datetime.now(tz)
+#async def schedule_fetch_and_forward():
+#    while True:
+#        # Get the current time in the user's timezone (you can adjust the timezone as needed)
+#        tz = pytz.timezone('Asia/Bangkok')  # Replace 'Your_Timezone_Here' with the desired timezone
+#        current_time = datetime.datetime.now(tz)
 
         # Define the times for message fetching and forwarding (adjust the times as needed)
-        fetch_times = [datetime.time(8, 0), datetime.time(13, 0), datetime.time(16, 0), datetime.time(18, 0)]
+#        fetch_times = [datetime.time(8, 0), datetime.time(13, 0), datetime.time(16, 0), datetime.time(18, 0)]
 
-        # Set the date of current_time to a default date (e.g., 1970-01-01) for comparison
-        current_time = current_time.replace(year=1970, month=1, day=1)
-
-        if current_time.time() in fetch_times:
-            try:
+#        if current_time.time() in fetch_times:
+#            try:
                 # Call the fetch_messages_from_chats function using await
-                parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
+#                parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
 
                 # Send the result to the user
-                await send_message_to_user(chat_id, parsed_messages)
-            except Exception as e:
-                print(f"Error occurred during scheduled fetch and forward: {str(e)}")
+#               await send_message_to_user(chat_id, parsed_messages)
+#            except Exception as e:
+#                print(f"Error occurred during scheduled fetch and forward: {str(e)}")
 
         # Sleep for 1 minute to avoid continuous checking
-        await asyncio.sleep(60)
+#        await asyncio.sleep(60)
+
+
+# Функция, которая будет выполняться по расписанию
+async def job_function(chat_id, messages):
+
+    if not messages:
+        await bot.send_message(chat_id, "No messages found.")
+        return
+
+    message_chunk_size = 4096  # Maximum message size limit for Telegram
+
+    message_to_send = "Messages found:\n\n"
+    for message in messages:
+        message_info = (
+            f"Chat: {message['chat']}\n"
+            f"Chat_link: {message['link']}\n"
+            f"Author: {message['author']} ({message['author_link']})\n"
+            f"Date: {message['date_time']}\n"
+            f"Message: {message['message_text']}\n\n"
+        )
+
+        # Check if the chunk size exceeds the limit and split the message if necessary
+        if len(message_to_send) + len(message_info) <= message_chunk_size:
+            message_to_send += message_info
+        else:
+            # Send the current chunk
+            await bot.send_message(chat_id, message_to_send)
+
+            # Start a new chunk
+            message_to_send = message_info
+
+    # Send any remaining messages in the last chunk
+    await bot.send_message(chat_id, message_to_send)
 
 
 # Function to send messages to the user using the bot
@@ -153,6 +189,8 @@ async def send_message_to_user(chat_id, messages):
 # Handler for the /start command
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
+    # Запуск планировщика при старте бота
+    scheduler.add_job(job_function, 'interval', hours=6)
     keyboard_markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [
         types.KeyboardButton(text="/fetch_messages"),
@@ -192,17 +230,16 @@ async def handle_unknown_command(message: types.Message):
     await message.answer("The bot does not know this command. See the help team")
 
 
+# Запуск бота
+async def run_bot():
+    try:
+        await dp.start_polling()
+    finally:
+        await dp.storage.close()
+        await dp.storage.wait_closed()
+
+
+# Запуск основной функции бота в асинхронном режиме
 if __name__ == '__main__':
-    # Start the bot
-    from aiogram import executor
-    executor.start_polling(dp)
-
-    # Get the event loop
     loop = asyncio.get_event_loop()
-
-    # Schedule the fetch_and_forward task
-    loop.create_task(schedule_fetch_and_forward())
-
-    # Run the event loop
-    loop.run_forever()
-
+    loop.run_until_complete(run_bot())
