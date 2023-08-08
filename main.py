@@ -176,8 +176,8 @@ async def send_message_to_user(chat_id, messages):
             f"Chat_link: {message['link']}\n"
             f"Author: {message['author']} ({message['author_link']})\n"
             f"Date: {message['date_time']}\n"
-            f"Message: {message['message_text']}\n"
             f"Keywords: {formatted_keywords}\n\n"
+            f"Message: {message['message_text']}\n"
         )
 
         # Check if the chunk size exceeds the limit and split the message if necessary
