@@ -2,7 +2,6 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-import aioschedule
 from config import token, chat_id
 from pyrogram import Client
 import asyncio
@@ -133,6 +132,12 @@ async def send_message_to_user(chat_id, messages):
     await bot.send_message(chat_id, message_to_send, parse_mode="HTML")
 
 
+# Обработчик для рассылки тестового сообщения
+async def send_test_message():
+    test_message = "This is a test message sent by the bot."
+    await bot.send_message(chat_id, test_message)
+
+
 # Handler for the /start command
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
@@ -184,7 +189,6 @@ async def run_bot():
         await dp.storage.wait_closed()
 
 
-# Запуск основной функции бота в асинхронном режиме
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
 
@@ -193,6 +197,9 @@ if __name__ == '__main__':
 
     # Запуск функции fetch_messages_job каждый час
     scheduler.add_job(fetch_messages_job, 'interval', hours=1)
+    
+    # Запуск функции send_test_message каждые 5 минут
+    scheduler.add_job(send_test_message, 'interval', minutes=5)
     
     # Запуск планировщика
     scheduler.start()
