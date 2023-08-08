@@ -128,9 +128,9 @@ async def send_message_to_user(chat_id, messages):
 
 
 # Обработчик для рассылки тестового сообщения
-async def send_test_message():
-    test_message = "This is a test message sent by the bot."
-    await bot.send_message(chat_id, test_message)
+#async def send_test_message():
+#    test_message = "This is a test message sent by the bot."
+#    await bot.send_message(chat_id, test_message)
 
 # Обработчик для пересылки сообщений чата
 async def fetch_messages_job():
