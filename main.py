@@ -134,9 +134,11 @@ async def send_test_message():
 
 # Обработчик для пересылки сообщений чата
 async def fetch_messages_job():
+        chat_id = '296318553'  # Укажите здесь конкретный chat_id
         parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
         # Send the result to the user
-        await send_message_to_user(message.from_user.id, parsed_messages)
+        await send_message_to_user(chat_id, parsed_messages)
+
 
 
 # Handler for the /start command
@@ -186,6 +188,7 @@ async def run_bot():
     try:
         await dp.start_polling()
     finally:
+        scheduler.shutdown()
         await dp.storage.close()
         await dp.storage.wait_closed()
 
