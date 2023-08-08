@@ -6,10 +6,7 @@ from config import token, chat_id
 from pyrogram import Client
 import asyncio
 import datetime
-import itertools
 import aiogram.utils.executor
-import pytz
-from config import api_id, api_hash
 from keywords import keywords
 from chat_links import chat_links
 
@@ -60,7 +57,6 @@ async def fetch_messages_from_chats(chat_links, keywords):
                 for keyword in keywords:
 
                     async for message in client.search_messages(chat_id, keyword):
-                        # Rest of the code to process each message goes here
                         # Check if the message is from today
                         if message.date.date() == current_date:
                             date_time = message.date.strftime("%Y-%m-%d %H:%M:%S")
@@ -98,6 +94,11 @@ async def fetch_messages_job():
         await send_message_to_user(chat_id, parsed_messages)
     except Exception as e:
         print(f"Error occurred in fetch_messages_job: {str(e)}")
+
+
+async def send_message_interval(bot: Bot):
+await bot.send_message(chat_id=chat_id,
+text='Это сообщение будет оптравляться с интервалом в 1 минуту')
 
 
 # Function to send messages to the user using the bot
@@ -192,10 +193,11 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
 
     # Инициализация планировщика
-    scheduler = AsyncIOScheduler()
+    scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
 
     # Запуск функции fetch_messages_job каждый час
     scheduler.add_job(fetch_messages_job, 'interval', hours=1)
+    scheduler.add_job(send_message_interval, trigger='interval', seconds=60, kwargs={'bot': bot})
 
     # Запуск планировщика
     scheduler.start()
