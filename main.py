@@ -83,9 +83,12 @@ async def fetch_messages_from_chats(chat_links, keywords):
                                 "author": author_name,
                                 "author_link": author_link,
                                 "date_time": date_time,
+                                "keywords_used": [keyword],
                                 "message_text": message.text,
                             }
-                            parsed_messages.append(parsed_message)
+                            # Проверяем, что текст сообщения не пустой
+                            if parsed_message["message_text"]:
+                                parsed_messages.append(parsed_message)
 
                 # Sleep for 2 seconds between iterations
                 await asyncio.sleep(2)
@@ -137,6 +140,7 @@ async def job_function(chat_id, messages):
             f"Chat_link: {message['link']}\n"
             f"Author: {message['author']} ({message['author_link']})\n"
             f"Date: {message['date_time']}\n"
+            f"Keywords: {', '.join(message.get('keywords_used', []))}\n\n"
             f"Message: {message['message_text']}\n\n"
         )
 
@@ -169,6 +173,7 @@ async def send_message_to_user(chat_id, messages):
             f"Chat_link: {message['link']}\n"
             f"Author: {message['author']} ({message['author_link']})\n"
             f"Date: {message['date_time']}\n"
+            f"Keywords: {', '.join(message.get('keywords_used', []))}\n\n"
             f"Message: {message['message_text']}\n\n"
         )
 
