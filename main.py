@@ -200,7 +200,12 @@ if __name__ == '__main__':
     scheduler = AsyncIOScheduler(timezone='Europe/Moscow')
 
     # Запуск функции fetch_messages_job каждый час
-    scheduler.add_job(fetch_messages_job, 'interval', hours=1)
+    scheduler.add_job(
+    func=fetch_messages_job,
+    trigger='interval',
+    minutes=10
+)
+
     
     # Запуск функции send_test_message каждые 5 минут
     # scheduler.add_job(send_test_message, 'interval', minutes=5)
