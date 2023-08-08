@@ -168,13 +168,16 @@ async def send_message_to_user(chat_id, messages):
 
     message_to_send = "Messages found:\n\n"
     for message in messages:
+        # Форматирование текста ключевых слов
+        formatted_keywords = ", ".join([f"<b>{kw}</b>" for kw in message.get("keywords_used", [])])
+
         message_info = (
             f"Chat: {message['chat']}\n"
             f"Chat_link: {message['link']}\n"
             f"Author: {message['author']} ({message['author_link']})\n"
             f"Date: {message['date_time']}\n"
-            f"Keywords: {', '.join(message.get('keywords_used', []))}\n\n"
-            f"Message: {message['message_text']}\n\n"
+            f"Message: {message['message_text']}\n"
+            f"Keywords: {formatted_keywords}\n\n"
         )
 
         # Check if the chunk size exceeds the limit and split the message if necessary
@@ -182,13 +185,13 @@ async def send_message_to_user(chat_id, messages):
             message_to_send += message_info
         else:
             # Send the current chunk
-            await bot.send_message(chat_id, message_to_send)
+            await bot.send_message(chat_id, message_to_send, parse_mode="HTML")
 
             # Start a new chunk
             message_to_send = message_info
 
     # Send any remaining messages in the last chunk
-    await bot.send_message(chat_id, message_to_send)
+    await bot.send_message(chat_id, message_to_send, parse_mode="HTML")
 
 
 # Handler for the /start command
