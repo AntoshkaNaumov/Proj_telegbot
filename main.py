@@ -67,9 +67,6 @@ async def fetch_messages_from_chats(chat_links, keywords):
 
                     async for message in client.search_messages(chat_id, keyword):
                         # Rest of the code to process each message goes here
-
-                        # Write messages to the worksheet
-                        #for message in messages:
                         # Check if the message is from today
                         if message.date.date() == current_date:
                             date_time = message.date.strftime("%Y-%m-%d %H:%M:%S")
@@ -99,27 +96,6 @@ async def fetch_messages_from_chats(chat_links, keywords):
                 print()
                 continue
     return parsed_messages
-
-
-# Uncomment and adjust the scheduling code
-async def schedule_fetch_and_forward():
-    while True:
-        # Get the current time in the user's timezone (you can adjust the timezone as needed)
-        tz = pytz.timezone('Europe/Moscow')  # 'Europe/Moscow' is the timezone for Moscow
-        current_time = datetime.datetime.now(tz)
-
-        # Define the times for message fetching and forwarding (adjust the times as needed)
-        fetch_times = [datetime.time(15, 0)]
-
-        if current_time.time() in fetch_times:
-            try:
-                parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
-                await send_message_to_user(chat_id, parsed_messages)  # Send the messages directly here
-            except Exception as e:
-                print(f"Error occurred during scheduled fetch and forward: {str(e)}")
-
-        # Sleep for 1 minute to avoid continuous checking
-        await asyncio.sleep(60)
 
 
 # Функция, которая будет выполняться по расписанию
@@ -196,14 +172,14 @@ async def send_message_to_user(chat_id, messages):
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
     # Запуск планировщика при старте бота
-    scheduler.add_job(lambda: job_function(message.from_user.id, []), 'interval', hours=6)
+    scheduler.add_job(lambda: job_function(message.from_user.id, []), 'interval', hours=1)
     keyboard_markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [
         types.KeyboardButton(text="/fetch_messages"),
         types.KeyboardButton(text="Help"),
     ]
     keyboard_markup.add(*buttons)
-    welcome_message = "Welcome to the telegram bot. For help, press the Help command."
+    welcome_message = "Welcome to the telegram bot. See the help command."
     await bot.send_message(message.from_user.id, welcome_message, reply_markup=keyboard_markup)
 
 
@@ -236,21 +212,17 @@ async def handle_unknown_command(message: types.Message):
     await message.answer("The bot does not know this command. See the help team")
 
 
-# Modify the run_bot function
+# Запуск бота
 async def run_bot():
     try:
-        loop = asyncio.get_event_loop()
-
-        # Create a task for the scheduling function
-        loop.create_task(schedule_fetch_and_forward())
-
-        # Start the dispatcher
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
 
 
-# Start the bot
+# Запуск основной функции бота в асинхронном режиме
 if __name__ == '__main__':
-    asyncio.run(run_bot())
+    loop = asyncio.get_event_loop()
+    loop.run_until_complete(run_bot())
+    
