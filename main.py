@@ -2,6 +2,7 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+import aioschedule
 from config import token, chat_id
 from pyrogram import Client
 import asyncio
@@ -94,11 +95,6 @@ async def fetch_messages_job():
         await send_message_to_user(chat_id, parsed_messages)
     except Exception as e:
         print(f"Error occurred in fetch_messages_job: {str(e)}")
-
-
-async def send_message_interval(bot: Bot):
-await bot.send_message(chat_id=chat_id,
-text='Это сообщение будет оптравляться с интервалом в 1 минуту')
 
 
 # Function to send messages to the user using the bot
@@ -197,8 +193,7 @@ if __name__ == '__main__':
 
     # Запуск функции fetch_messages_job каждый час
     scheduler.add_job(fetch_messages_job, 'interval', hours=1)
-    scheduler.add_job(send_message_interval, trigger='interval', seconds=60, kwargs={'bot': bot})
-
+    
     # Запуск планировщика
     scheduler.start()
 
