@@ -88,12 +88,7 @@ async def fetch_messages_from_chats(chat_links, keywords):
     return parsed_messages
 
 
-async def fetch_messages_job():
-    try:
-        parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
-        await send_message_to_user(chat_id, parsed_messages)
-    except Exception as e:
-        print(f"Error occurred in fetch_messages_job: {str(e)}")
+
 
 
 # Function to send messages to the user using the bot
@@ -136,6 +131,12 @@ async def send_message_to_user(chat_id, messages):
 async def send_test_message():
     test_message = "This is a test message sent by the bot."
     await bot.send_message(chat_id, test_message)
+
+# Обработчик для пересылки сообщений чата
+async def fetch_messages_job():
+        parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
+        # Send the result to the user
+        await send_message_to_user(message.from_user.id, parsed_messages)
 
 
 # Handler for the /start command
