@@ -101,27 +101,25 @@ async def fetch_messages_from_chats(chat_links, keywords):
     return parsed_messages
 
 
-#async def schedule_fetch_and_forward():
-#    while True:
-#        # Get the current time in the user's timezone (you can adjust the timezone as needed)
-#        tz = pytz.timezone('Asia/Bangkok')  # Replace 'Your_Timezone_Here' with the desired timezone
-#        current_time = datetime.datetime.now(tz)
+# Uncomment and adjust the scheduling code
+async def schedule_fetch_and_forward():
+    while True:
+        # Get the current time in the user's timezone (you can adjust the timezone as needed)
+        tz = pytz.timezone('Europe/Moscow')  # 'Europe/Moscow' is the timezone for Moscow
+        current_time = datetime.datetime.now(tz)
 
         # Define the times for message fetching and forwarding (adjust the times as needed)
-#        fetch_times = [datetime.time(8, 0), datetime.time(13, 0), datetime.time(16, 0), datetime.time(18, 0)]
+        fetch_times = [datetime.time(15, 0)]
 
-#        if current_time.time() in fetch_times:
-#            try:
-                # Call the fetch_messages_from_chats function using await
-#                parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
-
-                # Send the result to the user
-#               await send_message_to_user(chat_id, parsed_messages)
-#            except Exception as e:
-#                print(f"Error occurred during scheduled fetch and forward: {str(e)}")
+        if current_time.time() in fetch_times:
+            try:
+                parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
+                await send_message_to_user(chat_id, parsed_messages)  # Send the messages directly here
+            except Exception as e:
+                print(f"Error occurred during scheduled fetch and forward: {str(e)}")
 
         # Sleep for 1 minute to avoid continuous checking
-#        await asyncio.sleep(60)
+        await asyncio.sleep(60)
 
 
 # Функция, которая будет выполняться по расписанию
@@ -238,16 +236,21 @@ async def handle_unknown_command(message: types.Message):
     await message.answer("The bot does not know this command. See the help team")
 
 
-# Запуск бота
+# Modify the run_bot function
 async def run_bot():
     try:
+        loop = asyncio.get_event_loop()
+
+        # Create a task for the scheduling function
+        loop.create_task(schedule_fetch_and_forward())
+
+        # Start the dispatcher
         await dp.start_polling()
     finally:
         await dp.storage.close()
         await dp.storage.wait_closed()
 
 
-# Запуск основной функции бота в асинхронном режиме
+# Start the bot
 if __name__ == '__main__':
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(run_bot())
+    asyncio.run(run_bot())
