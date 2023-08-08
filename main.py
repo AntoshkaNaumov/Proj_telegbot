@@ -13,18 +13,12 @@ from config import api_id, api_hash
 from keywords import keywords
 from chat_links import chat_links
 
-
 # Set up logging
 logging.basicConfig(level=logging.DEBUG)
 
 # Create the bot and dispatcher objects
 bot = Bot(token=token)
 dp = Dispatcher(bot, storage=MemoryStorage())
-
-
-# Инициализация планировщика
-scheduler = AsyncIOScheduler()
-scheduler.start()
 
 
 async def get_author_info(client, chat_id, user_id):
@@ -98,38 +92,12 @@ async def fetch_messages_from_chats(chat_links, keywords):
     return parsed_messages
 
 
-# Функция, которая будет выполняться по расписанию
-async def job_function(chat_id, messages):
-
-    if not messages:
-        await bot.send_message(chat_id, "No messages found.")
-        return
-
-    message_chunk_size = 4096  # Maximum message size limit for Telegram
-
-    message_to_send = "Messages found:\n\n"
-    for message in messages:
-        message_info = (
-            f"Chat: {message['chat']}\n"
-            f"Chat_link: {message['link']}\n"
-            f"Author: {message['author']} ({message['author_link']})\n"
-            f"Date: {message['date_time']}\n"
-            f"Keywords: {', '.join(message.get('keywords_used', []))}\n\n"
-            f"Message: {message['message_text']}\n\n"
-        )
-
-        # Check if the chunk size exceeds the limit and split the message if necessary
-        if len(message_to_send) + len(message_info) <= message_chunk_size:
-            message_to_send += message_info
-        else:
-            # Send the current chunk
-            await bot.send_message(chat_id, message_to_send)
-
-            # Start a new chunk
-            message_to_send = message_info
-
-    # Send any remaining messages in the last chunk
-    await bot.send_message(chat_id, message_to_send)
+async def fetch_messages_job():
+    try:
+        parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
+        await send_message_to_user(chat_id, parsed_messages)
+    except Exception as e:
+        print(f"Error occurred in fetch_messages_job: {str(e)}")
 
 
 # Function to send messages to the user using the bot
@@ -171,8 +139,6 @@ async def send_message_to_user(chat_id, messages):
 # Handler for the /start command
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
-    # Запуск планировщика при старте бота
-    scheduler.add_job(lambda: job_function(message.from_user.id, []), 'interval', hours=1)
     keyboard_markup = types.ReplyKeyboardMarkup(row_width=2, resize_keyboard=True)
     buttons = [
         types.KeyboardButton(text="/fetch_messages"),
@@ -224,5 +190,14 @@ async def run_bot():
 # Запуск основной функции бота в асинхронном режиме
 if __name__ == '__main__':
     loop = asyncio.get_event_loop()
+
+    # Инициализация планировщика
+    scheduler = AsyncIOScheduler()
+
+    # Запуск функции fetch_messages_job каждый час
+    scheduler.add_job(fetch_messages_job, 'interval', hours=1)
+
+    # Запуск планировщика
+    scheduler.start()
+
     loop.run_until_complete(run_bot())
-    
