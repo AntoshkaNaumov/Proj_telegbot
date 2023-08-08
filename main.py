@@ -2,11 +2,10 @@ import logging
 from aiogram import Bot, Dispatcher, types
 from aiogram.contrib.fsm_storage.memory import MemoryStorage
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from config import token, chat_id
+from config import token
 from pyrogram import Client
 import asyncio
 import datetime
-import aiogram.utils.executor
 from keywords import keywords
 from chat_links import chat_links
 
@@ -18,7 +17,7 @@ bot = Bot(token=token)
 dp = Dispatcher(bot, storage=MemoryStorage())
 
 
-async def get_author_info(client, chat_id, user_id):
+async def get_author_info(client, user_id):
     try:
         user = await client.get_users(user_id)
         return f"{user.first_name} {user.last_name} ({user.username})", f"https://t.me/{user.username}"
@@ -62,7 +61,7 @@ async def fetch_messages_from_chats(chat_links, keywords):
                             date_time = message.date.strftime("%Y-%m-%d %H:%M:%S")
 
                             # Get author info
-                            author_name, author_link = await get_author_info(client, chat_id, message.from_user.id)
+                            author_name, author_link = await get_author_info(client, message.from_user.id)
 
                             parsed_message = {
                                 "chat": chat.title,
@@ -86,9 +85,6 @@ async def fetch_messages_from_chats(chat_links, keywords):
                 print()
                 continue
     return parsed_messages
-
-
-
 
 
 # Function to send messages to the user using the bot
@@ -128,17 +124,17 @@ async def send_message_to_user(chat_id, messages):
 
 
 # Обработчик для рассылки тестового сообщения
-#async def send_test_message():
+# async def send_test_message():
 #    test_message = "This is a test message sent by the bot."
 #    await bot.send_message(chat_id, test_message)
 
+
 # Обработчик для пересылки сообщений чата
 async def fetch_messages_job():
-        chat_id = '296318553'  # Укажите здесь конкретный chat_id
-        parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
-        # Send the result to the user
-        await send_message_to_user(chat_id, parsed_messages)
-
+    chat_id = '296318553'  # Укажите здесь конкретный chat_id
+    parsed_messages = await fetch_messages_from_chats(chat_links, keywords)
+    # Send the result to the user
+    await send_message_to_user(chat_id, parsed_messages)
 
 
 # Handler for the /start command
@@ -201,15 +197,14 @@ if __name__ == '__main__':
 
     # Запуск функции fetch_messages_job каждый час
     scheduler.add_job(
-    func=fetch_messages_job,
-    trigger='interval',
-    minutes=10
-)
+        func=fetch_messages_job,
+        trigger='interval',
+        hours=1
+    )
 
-    
     # Запуск функции send_test_message каждые 5 минут
     # scheduler.add_job(send_test_message, 'interval', minutes=5)
-    
+
     # Запуск планировщика
     scheduler.start()
 
