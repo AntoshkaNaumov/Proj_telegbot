@@ -199,7 +199,7 @@ if __name__ == '__main__':
     scheduler.add_job(
         func=fetch_messages_job,
         trigger='interval',
-        hours=1
+        hours=3
     )
 
     # Запуск функции send_test_message каждые 5 минут
